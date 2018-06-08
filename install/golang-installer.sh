@@ -22,5 +22,5 @@ if [[ $1 =~ ^[0-9]+.[0-9]+.[0-9]+$ ]]; then
 
     rm -f /home/$USER/Downloads/$dl
 else 
-    printf "does not match"
+    printf "Golang version is not correct"
 fi
