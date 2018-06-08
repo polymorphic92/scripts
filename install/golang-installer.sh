@@ -23,6 +23,10 @@ if [[ $1 =~ ^[0-9]+.[0-9]+.[0-9]+$ ]]; then
         echo 'PATH=$PATH:$(go env GOPATH)/bin' >> /home/$USER/.bashrc
     fi
 
+    #create go dir if not already created
+    if [ ! -d /home/$USER/go ]; then mkdir /home/$USER/go; fi
+
+
     source /home/$USER/.profile 
     go version
 
