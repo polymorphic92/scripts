@@ -17,6 +17,12 @@ if [[ $1 =~ ^[0-9]+.[0-9]+.[0-9]+$ ]]; then
         echo "Adding go to /home/$USER/.profile becuse it is not there"
         echo 'export PATH=$PATH:/usr/local/go/bin' >> /home/$USER/.profile
     fi
+
+    # might to change location of setting path 
+    if ! grep -q 'PATH=$PATH:$(go env GOPATH)/bin' "/home/$USER/.bashrc"; then
+        echo 'PATH=$PATH:$(go env GOPATH)/bin' >> /home/$USER/.bashrc
+    fi
+
     source /home/$USER/.profile 
     go version
 
