@@ -1,15 +1,15 @@
 #!/bin/bash
 
 if [[ $1 =~ ^[0-9]+.[0-9]+.[0-9]+$ ]]; then
-    printf "matched"
-    VERSION=$1
-    cd /home/$USER/Downloads && curl -O https://dl.google.com/go/go$VERSION.linux-amd64.tar.gz
+    dl=go$1.linux-amd64.tar.gz
+    go_dir=/usr/local
 
-    sudo tar -C /usr/local -xzf go$VERSION.linux-amd64.tar.gz
-    sudo rm -f /usr/local/go$VERSION.linux-amd64.tar.gz
-    sudo rm -f /home/$USER/Downloads/go$VERSION.linux-amd64.tar.gz
+    cd /home/$USER/Downloads && curl -O https://dl.google.com/go/$dl
+    ls -a /home/$USER/Downloads
+    sudo tar -C $go_dir -xzf $dl
+    rm -f /home/$USER/Downloads/$dl
 
-    if ! grep -q 'export PATH=$PATH:/usr/local/go/bin' "/home/$USER/.profile"; then
+    if ! grep -q 'export PATH=$PATH:'$go_dir'/go/bin' "/home/$USER/.profile"; then
         echo "Adding go to /home/$USER/.profile becuse it is not there"
         echo 'export PATH=$PATH:/usr/local/go/bin' >> /home/$USER/.profile
     fi
