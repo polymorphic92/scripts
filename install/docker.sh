@@ -36,3 +36,15 @@ sudo usermod -aG docker $USER
  # Enable docker to start on system boot via systemd
 
  sudo systemctl enable docker
+
+# #install docker-compose 
+
+if ! [ -x "$(command -v docker-compose)" ]; then
+  COMPOSE_VERSION=$(curl -s -o /dev/null -I -w "%{redirect_url}\n" https://github.com/docker/compose/releases/latest | grep -oP "[0-9]+(\.[0-9]+)+$")
+  curl -L https://github.com/docker/compose/releases/download/$COMPOSE_VERSION/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+  chmod +x /usr/local/bin/docker-compose
+  curl -L https://raw.githubusercontent.com/docker/compose/$COMPOSE_VERSION/contrib/completion/bash/docker-compose > /etc/bash_completion.d/docker-compose
+  docker-compose --version
+else 
+    printf "docker-compose already installed"
+fi
