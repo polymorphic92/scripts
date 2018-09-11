@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-if [[ $1 =~ ^[0-9]+.[0-9]+.[0-9]+$ ]]; then
+if [[ $1 =~ ^[0-9]+.[0-9]+(.[0-9]+)*$ ]]; then
     dl=go$1.linux-amd64.tar.gz
     go_dir=/usr/local
 
