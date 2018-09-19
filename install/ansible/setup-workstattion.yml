@@ -1,0 +1,90 @@
+- hosts: localhost
+  tasks:
+
+  - easy_install:
+      name: pip
+      state: latest
+
+  #################################################################################
+  ############################## DNF ##############################################
+  #################################################################################
+
+  - name: make dnf recheck for new metadata from repos
+    command: dnf clean expire-cache
+    warn: False
+
+  - name: check for updates (dnf)
+    dnf: list=updates
+    register: dnfoutput
+
+  - debug: msg="{{ inventory_hostname}} {{ dnfoutput.results|length }}"
+    when: dnfoutput.results|length > 0
+
+  - name: DNF upgrade
+    command: dnf upgrade -y
+    warn: False
+
+
+  - name: DNF Install tree
+    dnf:
+      name: tree
+      state: present
+      
+  - name: DNF Install wget
+    dnf:
+      name: wget
+      state: present
+
+  - name: DNF Install curl
+    dnf:
+      name: curl
+      state: present
+
+  - name: DNF Install vim
+    dnf:
+      name: vim
+      state: present
+
+  - name: DNF Install ranger
+    dnf:
+      name: ranger
+      state: present
+
+  - name: DNF Install ranger
+    dnf:
+      name: ranger
+      state: present
+
+#   ################################################################################
+#   ######################## FLATPAKS ##############################################
+#   ################################################################################
+
+  - name: Add the Gnome flatpak remote to the system installation
+    flatpak_remote:
+      name: gnome
+      state: present
+      flatpakrepo_url: https://sdk.gnome.org/gnome-apps.flatpakrepo
+
+  - name: Add the flathub flatpak repository remote to the user installation
+    flatpak_remote:
+      name: flathub
+      state: present
+      flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+      method: user
+
+  - name: Install the Spotify flatpak
+    flatpak:
+      name:  com.spotify.Client
+
+  - name: Install the Postman flatpak
+    flatpak:
+      name:  com.getpostman.Postman
+
+################################################################################
+######################## Other #################################################
+################################################################################
+
+- name: Install Rust
+  shell: curl https://sh.rustup.rs -sSf | sh -s -- -y 
+
+
