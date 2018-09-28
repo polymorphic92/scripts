@@ -1,11 +1,10 @@
 #!/bin/bash
 
-
-minishift_version="${$1:-"v3.9.0"}"
-cpus="${$2:-"2"}"
-mem="${$3:-"4"}"
-vm_driver="${$4:-"virtualbox"}"
-profile="${$5:-"test"}"
+minishift_version="v3.9.0"
+cpus="2"
+mem="4"
+vm_driver="virtualbox"
+profile="test"
 
 if type minishift >/dev/null 2>&1; then
     minishift profile set $profile
