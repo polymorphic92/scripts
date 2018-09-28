@@ -1,0 +1,95 @@
+#!/bin/bash
+set -e
+# See: https://redhat-developer-demos.github.io/istio-tutorial/istio-tutorial/1.0.0/index.html
+# Need to have a started minishift cluster 
+# Need to have cloned the istio repo 
+# Need to have added istioctl and oc in to $PATH
+
+if [ ! -d "$1" ]; then
+  echo "Istio tutorial repo does not exist"
+  exit 1;
+
+fi 
+
+cd $1 
+
+# foo=
+# echo $foo
+
+if [ $(git remote -v  | awk 'NR==1 {print $2}') != 'https://github.com/redhat-developer-demos/istio-tutorial' ]; then 
+    echo "$1 Does not have remote: https://github.com/redhat-developer-demos/istio-tutorial"
+    exit 1;
+fi
+
+if [[ $(hash oc) ]]; then
+  echo "oc not in path"
+  exit 1;
+fi
+
+if [[ $(hash istioctl) ]]; then
+  echo "oc not in path"
+  exit 1;
+fi
+
+if [[ $(hash mvn) ]]; then
+  echo "mvn not in path"
+  exit 1;
+fi
+
+if [[ $(hash docker) ]]; then
+  echo "docker not in path"
+  exit 1;
+fi
+
+if [[ $(minishift status | head -1 | awk '{print $2}') != 'Running' ]]; then
+  echo "Minishift is not Running"
+  exit 1;
+fi
+
+#############################################
+#############################################
+#############################################
+
+
+eval $(minishift oc-env)
+eval $(minishift docker-env)
+oc login $(minishift ip):8443 -u admin -p admin
+
+oc new-project tutorial
+oc adm policy add-scc-to-user privileged -z default -n tutorial
+
+##### INSTALL CUSTOMER #################
+cd customer/java/springboot
+mvn clean package # move to docker container ?
+docker build -t example/customer .
+
+oc apply -f <(istioctl kube-inject -f ../../kubernetes/Deployment.yml) -n tutorial
+oc create -f ../../kubernetes/Service.yml -n tutorial
+oc expose service customer
+#############################################
+
+cd $1
+
+##### INSTALL PREFERENCE #################
+cd preference/java/springboot
+mvn clean package
+docker build -t example/preference:v1 .
+
+oc apply -f <(istioctl kube-inject -f ../../kubernetes/Deployment.yml) -n tutorial
+oc create -f ../../kubernetes/Service.yml
+#############################################
+
+cd $1
+
+##### INSTALL RECOMMENDATION #################
+cd recommendation/java/vertx
+mvn clean package
+docker build -t example/recommendation:v1 .
+
+oc apply -f <(istioctl kube-inject -f ../../kubernetes/Deployment.yml) -n tutorial
+oc create -f ../../kubernetes/Service.yml
+#############################################
+sleep 5
+
+oc get pods
+
