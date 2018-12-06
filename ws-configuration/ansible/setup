@@ -1,0 +1,8 @@
+#!/bin/bash
+
+echo "Setting up ansible"
+
+sudo dnf upgrade --refresh -y 
+sudo dnf install ansible
+
+# run playbooks
