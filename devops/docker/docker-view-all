@@ -1,0 +1,11 @@
+toilet  -f future -F border DOCKER CONTAINERS
+docker ps -a 
+printf "\n\n\n"
+toilet  -f future -F border DOCKER IMAGES
+docker images
+printf "\n\n\n"
+toilet  -f future -F border DOCKER VOLUMES
+docker volume ls
+printf "\n\n\n"
+toilet  -f future -F border DOCKER NETWORKS
+docker network ls  
