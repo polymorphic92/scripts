@@ -1,4 +1,4 @@
 [
   { "src": "foo", "des": "bar" },
-  { "src": "foo1", "des": ".bashrc" }
+  { "src": "foo1", "des": ".bashrc1" }
 ]
