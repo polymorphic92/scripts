@@ -9,21 +9,16 @@
   ############################## DNF ##############################################
   #################################################################################
 
-  - name: make dnf recheck for new metadata from repos
-    command: dnf clean expire-cache
-    warn: False
+
 
   - name: check for updates (dnf)
     dnf: list=updates
     register: dnfoutput
 
-  - debug: msg="{{ inventory_hostname}} {{ dnfoutput.results|length }}"
-    when: dnfoutput.results|length > 0
-
-  - name: DNF upgrade
-    command: dnf upgrade -y
-    warn: False
-
+  - name: DNF upgrade all packages
+    dnf:
+      name: "*"
+      state: latest
 
   - name: DNF Install tree
     dnf:
