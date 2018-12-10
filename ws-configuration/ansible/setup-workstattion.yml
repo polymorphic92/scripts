@@ -39,8 +39,9 @@
         state: latest
 
     - name: DNF Install items
+      become: yes
       dnf:
-        name: ['tree', 'wget', 'curl', 'vim', 'ranger', 'flatpak']
+        name: ['tree', 'wget', 'curl', 'vim', 'ranger', 'flatpak','dnf-plugins-core']
         state: present
 
 ################################################################################
@@ -63,15 +64,71 @@
         method: user
 
     - name: Install Flatpaks
-      become: yes
       command: flatpak install --assumeyes flathub {{ item }}
       with_items:
         - com.spotify.Client
         - com.slack.Slack
-        - com.bitwarden.desktop
+        # - com.bitwarden.desktop
 
+################################################################################
+########################  DOCKER    ############################################
+################################################################################
 
-      
+    - name: remove Older versions of Docker
+      become: yes
+      dnf:
+        name: ['docker','docker-client','docker-client-latest','docker-common','docker-latest','docker-latest-logrotate','docker-logrotate','docker-selinux','docker-engine-selinux','docker-engine']
+        state: absent
+
+    - name: Add docker repo
+      become: yes
+      command:  'dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo'
+      args:
+        warn: no
+
+    - name: Add docker repo
+      become: yes
+      command:  'dnf config-manager --set-enabled docker-ce-test'
+      args:
+        warn: no
+
+    - name:  Install docker-ce
+      become: yes
+      dnf:
+        name: docker-ce
+        state: present
+
+    - name: "Add the {{ ansible_user_id }} to docker group"
+      become: yes
+      user:
+        name: "{{ ansible_user_id }}"
+        groups: docker
+        append: yes
+
+    - name: Make sure the docker service is running
+      systemd:
+        state: started
+        name: docker
+
+################################################################################
+########################  K8        ############################################
+################################################################################
+
+    - name: Add k8 repo
+      yum_repository:
+        name: Kubernetes
+        description: Kubernetes YUM repo
+        baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+        gpgcheck: yes
+        repo_gpgcheck: yes
+        gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+
+    - name: Install devops cli's
+      become: yes
+      dnf:
+        name: [ 'origin-clients']
+        # name: [ 'kubectl']
+        state: present
 
 
 
