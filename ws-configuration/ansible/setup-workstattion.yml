@@ -1,88 +1,78 @@
+---
 - hosts: localhost
   tasks:
+################################################################################
+######################## CREATE DIRS ###########################################
+################################################################################
 
-  - easy_install:
-      name: pip
-      state: latest
+    - file:
+        path: /home/{{ ansible_user_id }}/{{ item }}
+        state: directory
+        mode: 0755
+      with_items:
+        - repos
+        - sandbox
+        - tools
 
-  #################################################################################
-  ############################## DNF ##############################################
-  #################################################################################
+################################################################################
+############################### GIT ############################################
+################################################################################
+
+    - git:
+        repo: 'https://github.com/polymorphic92/dotfiles.git'
+        dest: /home/{{ ansible_user_id }}/dotfiles
+    - git:
+        repo: 'https://github.com/polymorphic92/dockerfiles.git'
+        dest: /home/{{ ansible_user_id }}/dockerfiles
+
+################################################################################
+######################## DNf   #################################################
+################################################################################
+
+    - name: check for updates (dnf)
+      dnf: list=updates
+      register: dnfoutput
+
+    - name: DNF upgrade all packages
+      dnf:
+        name: "*"
+        state: latest
+
+    - name: DNF Install items
+      dnf:
+        name: ['tree', 'wget', 'curl', 'vim', 'ranger', 'flatpak']
+        state: present
+
+################################################################################
+########################  Flatpaks  ############################################
+################################################################################
 
 
+    - name: Add the Gnome flatpak remote to the system installation
+      flatpak_remote:
+        name: gnome
+        state: present
+        flatpakrepo_url: https://sdk.gnome.org/gnome-apps.flatpakrepo
+        method: user  
 
-  - name: check for updates (dnf)
-    dnf: list=updates
-    register: dnfoutput
+    - name: Add the flathub flatpak repository remote to the user installation
+      flatpak_remote:
+        name: flathub
+        state: present
+        flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+        method: user
 
-  - name: DNF upgrade all packages
-    dnf:
-      name: "*"
-      state: latest
+    - name: Install Flatpaks
+      become: yes
+      command: flatpak install --assumeyes flathub {{ item }}
+      with_items:
+        - com.spotify.Client
+        - com.slack.Slack
+        - com.bitwarden.desktop
 
-  - name: DNF Install tree
-    dnf:
-      name: tree
-      state: present
+
       
-  - name: DNF Install wget
-    dnf:
-      name: wget
-      state: present
-
-  - name: DNF Install curl
-    dnf:
-      name: curl
-      state: present
-
-  - name: DNF Install vim
-    dnf:
-      name: vim
-      state: present
-
-  - name: DNF Install ranger
-    dnf:
-      name: ranger
-      state: present
 
 
-#################################################################################
-######################### FLATPAKS ##############################################
-#################################################################################
-
-  - name: Add the Gnome flatpak remote to the system installation
-    flatpak_remote:
-      name: gnome
-      state: present
-      flatpakrepo_url: https://sdk.gnome.org/gnome-apps.flatpakrepo
-
-  - name: Add the flathub flatpak repository remote to the user installation
-    flatpak_remote:
-      name: flathub
-      state: present
-      flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
-      method: user
-
-  - name: Install the Spotify flatpak
-    flatpak:
-      name:  com.spotify.Client
-
-  - name: Install the Postman flatpak
-    flatpak:
-      name:  com.getpostman.Postman
-
-################################################################################
-######################## CREAT DIRS   ##########################################
-################################################################################
-  - debug:
-      msg: "Creating in:  /home/{{ ansible_user_id }}"
-
-
-################################################################################
-######################## Other #################################################
-################################################################################
-
-- name: Install Rust
-  shell: curl https://sh.rustup.rs -sSf | sh -s -- -y 
 
 
