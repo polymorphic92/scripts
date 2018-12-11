@@ -25,6 +25,15 @@
         repo: 'https://github.com/polymorphic92/dockerfiles.git'
         dest: /home/{{ ansible_user_id }}/dockerfiles
 
+    - git_config:
+        name: user.name
+        scope: global
+        value: 'polymorphic92'
+    - git_config:
+        name: user.email
+        scope: global
+        value: 'polymorphic92@gmail.com'
+
 ################################################################################
 ######################## DNf   #################################################
 ################################################################################
