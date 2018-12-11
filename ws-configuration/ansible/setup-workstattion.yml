@@ -87,16 +87,16 @@
       args:
         warn: no
 
-    - name: Add docker repo
+    - name: Configure Docker repo to use test
       become: yes
       command:  'dnf config-manager --set-enabled docker-ce-test'
       args:
         warn: no
 
-    - name:  Install docker-ce
+    - name:  Install docker-ce and docker-compose 
       become: yes
       dnf:
-        name: docker-ce
+        name: ['docker-ce','docker-compose']
         state: present
 
     - name: "Add the {{ ansible_user_id }} to docker group"
@@ -130,7 +130,10 @@
     - name: Install devops cli's
       become: yes
       dnf:
-        name: [ 'origin-clients']
-        # name: [ 'kubectl']
+        name: [ 'kubectl'] # origin-clients 
         state: present
+
+################################################################################
+################################################################################
+################################################################################
 
