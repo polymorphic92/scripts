@@ -34,6 +34,7 @@
       register: dnfoutput
 
     - name: DNF upgrade all packages
+      become: yes
       dnf:
         name: "*"
         state: latest
@@ -106,15 +107,18 @@
         append: yes
 
     - name: Make sure the docker service is running
+      become: yes
       systemd:
         state: started
         name: docker
+        enabled: yes
 
 ################################################################################
 ########################  K8        ############################################
 ################################################################################
 
     - name: Add k8 repo
+      become: yes
       yum_repository:
         name: Kubernetes
         description: Kubernetes YUM repo
@@ -129,7 +133,4 @@
         name: [ 'origin-clients']
         # name: [ 'kubectl']
         state: present
-
-
-
 
