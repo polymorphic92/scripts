@@ -136,12 +136,25 @@
         repo_gpgcheck: yes
         gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 
-    - name: Install devops cli's
+    - name: Install kubectl
       become: yes
       dnf:
         name: [ 'kubectl'] # origin-clients 
         state: present
 
+    - name: Get latest url      
+      uri:                                                               
+        url: https://api.github.com/repos/istio/istio/releases/latest
+        return_content: true                                             
+      register: json_reponse                                             
+ 
+    - name: get url 
+      become: yes 
+      get_url:                                                           
+        url: "{{ json_reponse.json.asset[0].browser_download_url' }}"                       
+        dest: .//istio-linux.tar.gz
+
+        
 ################################################################################
 ################################################################################
 ################################################################################
