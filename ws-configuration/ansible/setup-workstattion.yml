@@ -51,7 +51,7 @@
     - name: DNF Install items
       become: yes
       dnf:
-        name: ['tree', 'wget', 'curl', 'vim', 'ranger', 'flatpak','dnf-plugins-core']
+        name: ['tree', 'wget', 'curl', 'vim', 'ranger', 'flatpak','dnf-plugins-core','bat']
         state: present
 
 ################################################################################
@@ -142,19 +142,58 @@
         name: [ 'kubectl'] # origin-clients 
         state: present
 
-    - name: Get latest url      
-      uri:                                                               
+################################################################################
+######################## GITHUB RELEASES  ######################################
+################################################################################
+                                
+    - uri:                                                               
         url: https://api.github.com/repos/istio/istio/releases/latest
-        return_content: true                                             
-      register: json_reponse                                             
- 
-    - name: get url 
-      become: yes 
-      get_url:                                                           
-        url: "{{ json_reponse.json.asset[0].browser_download_url' }}"                       
-        dest: .//istio-linux.tar.gz
+        return_content: true    
+      register: istio_latest
 
-        
+    - uri:
+        url: https://api.github.com/repos/openshift/origin/releases/latest
+        return_content: true
+      register: oc_latest
+    
+    - uri:
+        url: https://api.github.com/repos/minishift/minishift/releases/latest
+        return_content: true
+      register: minishift_latest
+
+    - uri:
+        url: https://api.github.com/repos/kubernetes/minikube/releases/latest
+        return_content: true
+      register: minikube_latest
+
+
+    - name: "Download Istio"
+      become: yes
+      unarchive:
+       src: "{{ istio_latest | json_query('json.assets[0].browser_download_url') }}"
+       dest: .
+       remote_src: yes
+
+    - name: "Download oc"
+      become: yes
+      unarchive:
+        src: "{{ oc_latest | json_query('json.assets[1].browser_download_url') }}"
+        dest: . 
+        remote_src: yes
+
+    - name: "Download minishift"
+      become: yes
+      unarchive:
+        src: "{{ minishift_latest | json_query('json.assets[2].browser_download_url') }}"
+        dest: .
+        remote_src: yes
+
+    - name: "Download minikube"
+      get_url:
+        url: "{{ minikube_latest | json_query('json.assets[0].browser_download_url') }}"
+        dest: ./minikube
+        mode: 0774
+
 ################################################################################
 ################################################################################
 ################################################################################
