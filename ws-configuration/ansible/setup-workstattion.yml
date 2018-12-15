@@ -143,6 +143,54 @@
         state: present
 
 ################################################################################
+######################## VIRTUALBOX ############################################
+################################################################################
+
+    - name: Add Virualbox repo
+      become: yes
+      get_url: 
+        url: http://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo
+        dest: /etc/yum.repos.d/
+
+    - name: DNF Install Virualbox deps
+      become: yes
+      dnf:
+        name: 
+          - 'https://kojipkgs.fedoraproject.org//packages/compat-libvpx4/1.6.1/1.fc28/x86_64/compat-libvpx4-1.6.1-1.fc28.x86_64.rpm' 
+          - 'binutils' 
+          - 'gcc'
+          - 'make'
+          - 'patch'
+          - 'glibc-header'
+          - 'glibc-devel'
+          - 'kernel-headers'
+          - 'kernel-devel'
+          - 'dkms'
+          - 'qt5-qtx11extras'
+          - 'libxkbcommon'
+        state: present
+ 
+
+    - name: DNF Install Virualbox
+      become: yes
+      dnf:
+        name: 'http://download.virtualbox.org/virtualbox/rpm/fedora/26/x86_64/VirtualBox-5.2-5.2.22_126460_fedora26-1.x86_64.rpm'
+        state: present
+      
+    - name: "Rebuild kernel modules"
+      become: yes
+      shell: "/usr/lib/virtualbox/vboxdrv.sh setup"
+
+
+    - name: "Add the {{ ansible_user_id }} to vboxusers group"
+      become: yes
+      user:
+        name: "{{ ansible_user_id }}"
+        groups: vboxusers
+        append: yes
+
+
+################################################################################
 ######################## GITHUB RELEASES  ######################################
 ################################################################################
 
