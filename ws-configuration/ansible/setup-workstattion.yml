@@ -1,0 +1,280 @@
+---
+- hosts: localhost
+  tasks:
+################################################################################
+######################## CREATE DIRS ###########################################
+################################################################################
+
+    - file:
+        path: /home/{{ ansible_user_id }}/{{ item }}
+        state: directory
+        mode: 0755
+      with_items:
+        - repos
+        - sandbox
+        - tools
+
+################################################################################
+############################### GIT ############################################
+################################################################################
+
+    - git:
+        repo: 'https://github.com/polymorphic92/dotfiles.git'
+        dest: /home/{{ ansible_user_id }}/dotfiles
+    - git:
+        repo: 'https://github.com/polymorphic92/dockerfiles.git'
+        dest: /home/{{ ansible_user_id }}/dockerfiles
+
+    - git_config:
+        name: user.name
+        scope: global
+        value: 'polymorphic92'
+    - git_config:
+        name: user.email
+        scope: global
+        value: 'polymorphic92@gmail.com'
+
+################################################################################
+######################## DNf   #################################################
+################################################################################
+
+    - name: check for updates (dnf)
+      dnf: list=updates
+      register: dnfoutput
+
+    - name: DNF upgrade all packages
+      become: yes
+      dnf:
+        name: "*"
+        state: latest
+
+    - name: DNF Install items
+      become: yes
+      dnf:
+        name: ['tree', 'wget', 'curl', 'vim', 'ranger', 'flatpak','dnf-plugins-core','bat']
+        state: present
+
+################################################################################
+########################  Flatpaks  ############################################
+################################################################################
+
+
+    - name: Add the Gnome flatpak remote to the system installation
+      flatpak_remote:
+        name: gnome
+        state: present
+        flatpakrepo_url: https://sdk.gnome.org/gnome-apps.flatpakrepo
+        method: user  
+
+    - name: Add the flathub flatpak repository remote to the user installation
+      flatpak_remote:
+        name: flathub
+        state: present
+        flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+        method: user
+
+    - name: Install Flatpaks
+      command: flatpak install --assumeyes flathub {{ item }}
+      with_items:
+        - com.spotify.Client
+        - com.slack.Slack
+        # - com.bitwarden.desktop
+
+################################################################################
+########################  DOCKER    ############################################
+################################################################################
+
+    - name: remove Older versions of Docker
+      become: yes
+      dnf:
+        name: ['docker','docker-client','docker-client-latest','docker-common','docker-latest','docker-latest-logrotate','docker-logrotate','docker-selinux','docker-engine-selinux','docker-engine']
+        state: absent
+
+    - name: Add docker repo
+      become: yes
+      command:  'dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo'
+      args:
+        warn: no
+
+    - name: Configure Docker repo to use test
+      become: yes
+      command:  'dnf config-manager --set-enabled docker-ce-test'
+      args:
+        warn: no
+
+    - name:  Install docker-ce and docker-compose 
+      become: yes
+      dnf:
+        name: ['docker-ce','docker-compose']
+        state: present
+
+    - name: "Add the {{ ansible_user_id }} to docker group"
+      become: yes
+      user:
+        name: "{{ ansible_user_id }}"
+        groups: docker
+        append: yes
+
+    - name: Make sure the docker service is running
+      become: yes
+      systemd:
+        state: started
+        name: docker
+        enabled: yes
+
+################################################################################
+########################  K8        ############################################
+################################################################################
+
+    - name: Add k8 repo
+      become: yes
+      yum_repository:
+        name: Kubernetes
+        description: Kubernetes YUM repo
+        baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+        gpgcheck: yes
+        repo_gpgcheck: yes
+        gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+
+    - name: Install kubectl
+      become: yes
+      dnf:
+        name: [ 'kubectl'] # origin-clients 
+        state: present
+
+################################################################################
+######################## VIRTUALBOX ############################################
+################################################################################
+
+    - name: Add Virualbox repo
+      become: yes
+      get_url: 
+        url: http://download.virtualbox.org/virtualbox/rpm/fedora/virtualbox.repo
+        dest: /etc/yum.repos.d/
+
+    - name: DNF Install Virualbox deps
+      become: yes
+      dnf:
+        name: 
+          - 'https://kojipkgs.fedoraproject.org//packages/compat-libvpx4/1.6.1/1.fc28/x86_64/compat-libvpx4-1.6.1-1.fc28.x86_64.rpm' 
+          - 'binutils' 
+          - 'gcc'
+          - 'make'
+          - 'patch'
+          - 'glibc-header'
+          - 'glibc-devel'
+          - 'kernel-headers'
+          - 'kernel-devel'
+          - 'dkms'
+          - 'qt5-qtx11extras'
+          - 'libxkbcommon'
+        state: present
+ 
+
+    - name: DNF Install Virualbox
+      become: yes
+      dnf:
+        name: 'http://download.virtualbox.org/virtualbox/rpm/fedora/26/x86_64/VirtualBox-5.2-5.2.22_126460_fedora26-1.x86_64.rpm'
+        state: present
+      
+    - name: "Rebuild kernel modules"
+      become: yes
+      shell: "/usr/lib/virtualbox/vboxdrv.sh setup"
+
+
+    - name: "Add the {{ ansible_user_id }} to vboxusers group"
+      become: yes
+      user:
+        name: "{{ ansible_user_id }}"
+        groups: vboxusers
+        append: yes
+
+
+################################################################################
+######################## GITHUB RELEASES  ######################################
+################################################################################
+
+
+
+    - uri:                                                               
+        url: https://api.github.com/repos/istio/istio/releases/latest
+        return_content: true    
+      register: istio_latest
+
+    - uri:
+        url: https://api.github.com/repos/openshift/origin/releases/latest
+        return_content: true
+      register: oc_latest
+    
+    - uri:
+        url: https://api.github.com/repos/minishift/minishift/releases/latest
+        return_content: true
+      register: minishift_latest
+
+    - uri:
+        url: https://api.github.com/repos/kubernetes/minikube/releases/latest
+        return_content: true
+      register: minikube_latest
+
+
+
+    - name: "Download Istio"
+      become: yes
+      unarchive:
+       src: "{{ istio_latest | json_query('json.assets[0].browser_download_url') }}"
+       dest: .
+       remote_src: yes
+       list_files: yes
+      register: istio_contents
+
+    - name: "Download oc"
+      become: yes
+      unarchive:
+        src: "{{ oc_latest | json_query('json.assets[1].browser_download_url') }}"
+        dest: . 
+        remote_src: yes
+        list_files: yes
+      register: oc_contents
+
+    - name: "Download minishift"
+      become: yes
+      unarchive:
+        src: "{{ minishift_latest | json_query('json.assets[2].browser_download_url') }}"
+        dest: .
+        remote_src: yes
+        list_files: yes
+      register: minishift_contents
+
+    - name: "Download minikube"
+      get_url:
+        url: "{{ minikube_latest | json_query('json.assets[0].browser_download_url') }}"
+        dest: ./minikube
+        mode: 0774
+
+
+
+    - name: "Move Bins"
+      become: yes
+      shell: "mv -f ./{{item}}  /usr/local/bin"
+      with_items:
+       - "{{ istio_contents.files[0].split('/')[0] }}/bin/istioctl"
+       - "{{ oc_contents.files[0].split('/')[0] }}/oc"
+       - "{{ minishift_contents.files[0].split('/')[0] }}/minishift"
+       - "minikube"
+
+    - name: "Clean up"
+      become: yes 
+      file:
+        state: absent
+        path: "./{{item}}/"
+      with_items:
+       - "{{ istio_contents.files[0].split('/')[0] }}"
+       - "{{ oc_contents.files[0].split('/')[0] }}"
+       - "{{ minishift_contents.files[0].split('/')[0] }}" 
+
+ 
+
+################################################################################
+################################################################################
+################################################################################
+
