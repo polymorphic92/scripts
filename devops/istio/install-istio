@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+
 # See: https://redhat-developer-demos.github.io/istio-tutorial/istio-tutorial/1.0.0/index.html
 # Need to have a started minishift cluster 
 # Need to have cloned the istio repo 
@@ -10,31 +11,28 @@ if [ ! -d "$1" ]; then
   exit 1;
 elif [ ! -f "$1/install/kubernetes/istio-demo.yaml" ]; then 
     echo "$1 does not contain the file /install/kubernetes/istio-demo.yaml"
-    exit
+    exit 1;
 fi
 
-if [[ $(hash oc) ]]; then
-  echo "oc not in path"
-  exit 1;
-fi
+for b in oc istioctl minishift; do
+  if ! command -v $b >/dev/null 2>&1; then
+    echo "$b not in path"
+    exit 1;
+  fi
+done 
 
-if [[ $(hash istioctl) ]]; then
-  echo "oc not in path"
-  exit 1;
-fi
 
 if [[ $(minishift status | head -1 | awk '{print $2}') != 'Running' ]]; then
   echo "Minishift is not Running"
   exit 1;
 fi
 
-echo -e "Installing Istio on Minishft ... "
-cd $1 && pwd
-minishift status
-oc status
-oc projects
+# need to be login as admin 
 
-oc apply -f install/kubernetes/istio-demo.yaml
+echo -e "Installing Istio on Minishft ... "
+
+oc apply -f "$1/install/kubernetes/helm/istio/templates/crds.yaml"
+oc apply -f "$1/install/kubernetes/istio-demo.yaml"
 oc project istio-system
 
 oc expose svc istio-ingressgateway
