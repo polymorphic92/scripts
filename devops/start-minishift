@@ -1,12 +1,20 @@
 #!/bin/bash
 
-minishift_version="v3.9.0"
+minishift_version="v3.11.0"
 cpus="2"
-mem="4"
+mem="8"
 vm_driver="virtualbox"
 profile="test"
 
-if type minishift >/dev/null 2>&1; then
+if  command -v minishift >/dev/null 2>&1; then
+  if command -v oc >/dev/null 2>&1; then
+
+    if [ "$1" = "-f" ]; then
+       echo "force deleting stuff"
+       minishift images delete $(minishift images list)
+       minishift delete -f  --clear-cache
+    fi
+
     minishift profile set $profile
     minishift config set memory $memGB
     minishift config set cpus $cpus
@@ -15,15 +23,20 @@ if type minishift >/dev/null 2>&1; then
     minishift addon enable admin-user
     minishift config set openshift-version $minishift_version
     minishift addon enable anyuid
-    minishift start
 
-    echo "using oc to log into minishift"
-    eval $(minishift oc-env)
-    eval $(minishift docker-env)
+    minishift start
+    minishift ssh -- sudo setenforce 0 
+
+    sleep 5
+    echo "loging into minishift"
+
     oc login $(minishift ip):8443 -u admin -p admin
     minishift console
-    oc get node
-
+  else 
+    echo -e "Can not run oc ...\n"
+    exit 1;
+  fi 
 else
     echo -e "Can not run minishift ...\n"
+    exit 1;
 fi
