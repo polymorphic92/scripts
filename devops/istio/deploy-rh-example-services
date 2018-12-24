@@ -13,8 +13,6 @@ fi
 
 cd $1 
 
-# foo=
-# echo $foo
 
 if [ $(git remote -v  | awk 'NR==1 {print $2}') != 'https://github.com/redhat-developer-demos/istio-tutorial' ]; then 
     echo "$1 Does not have remote: https://github.com/redhat-developer-demos/istio-tutorial"
