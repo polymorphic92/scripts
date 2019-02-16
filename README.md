@@ -1,1 +1,1 @@
-# A Plethora of scripts. This repo is manily for archival purposes  
+# A Plethora of scripts.  
