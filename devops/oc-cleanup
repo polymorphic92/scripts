@@ -1,0 +1,11 @@
+#!/bin/bash
+
+echo -e "Clean up oc cluster up ....\n"
+oc cluster down
+sleep 3.5 
+
+sudo findmnt -r -n -o TARGET | grep openshift.local.clusterup/openshift.local.volumes | xargs -r sudo umount
+sudo rm -rf $HOME/openshift.local.clusterup/
+
+
+
