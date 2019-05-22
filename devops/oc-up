@@ -1,12 +1,32 @@
 #!/bin/bash
 
-echo -e "Running Cluster up...\n"
-(
-cd
-oc config current-context 
-oc cluster up --skip-registry-check
-sleep 2.5
-oc config current-context 
-oc login --insecure-skip-tls-verify -u system:admin
-oc adm policy add-role-to-user admin admin
-)
+ function cluster_up {
+    (
+      cd
+      echo -e "Starting Up Cluster: local files located: $PWD/openshift.local.clusterup\n"
+
+      oc config current-context 
+      oc cluster up --skip-registry-check
+      sleep 2.5
+      oc config current-context 
+      oc login --insecure-skip-tls-verify -u system:admin
+      oc adm policy add-role-to-user admin admin
+    )
+ }
+
+
+
+if [[ $(oc cluster status) =~ "is not running" ]]; then
+    echo -e "Cluster not running:\n"
+    cluster_up
+elif [ "$1" = "-f" ]; then
+    echo -e "forcefully deleting Cluster\n"
+    oc cluster down
+    sleep 3.5 
+    sudo findmnt -r -n -o TARGET | grep openshift.local.clusterup/openshift.local.volumes | xargs -r sudo umount
+    sudo rm -rf $HOME/openshift.local.clusterup/
+    cluster_up
+
+else
+    echo -e "Cluster already Running: local files located: $PWD/openshift.local.clusterup\n"
+fi
